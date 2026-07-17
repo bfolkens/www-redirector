@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: www-redirect
+data:
+  default.conf: |
+    server {
+      listen 80;
+      server_name ~^www\.(.+)$;
+
+      location / {
+        return 301 $scheme://$1$request_uri;
+      }
+
+      location = /healthcheck {
+        add_header Content-Type text/plain;
+        return 200 'ok';
+      }
+    }

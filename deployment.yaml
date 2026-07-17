@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: www-redirect
+  labels:
+    app: www-redirect
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: www-redirect
+  template:
+    metadata:
+      labels:
+        app: www-redirect
+    spec:
+      nodeSelector:
+        kubernetes.io/arch: arm64
+      containers:
+      - name: nginx
+        image: docker.io/arm64v8/nginx:alpine
+        ports:
+        - containerPort: 80
+          name: nginx
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: nginx
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: nginx
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: config-volume
+        configMap:
+          name: www-redirect
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - www-redirect
+                topologyKey: "kubernetes.io/hostname"
