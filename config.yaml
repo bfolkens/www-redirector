@@ -4,12 +4,18 @@ metadata:
   name: www-redirect
 data:
   default.conf: |
+    map $http_x_forwarded_proto $original_scheme {
+      default $scheme;
+      http    http;
+      https   https;
+    }
+
     server {
       listen 80;
-      server_name ~^www\.(.+)$;
+      server_name ~^www\.(?<domain>.+)$;
 
       location / {
-        return 301 $scheme://$1$request_uri;
+        return 301 $original_scheme://$domain$request_uri;
       }
 
       location = /healthcheck {
